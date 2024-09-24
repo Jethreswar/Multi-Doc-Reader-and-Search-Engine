@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Retriever</title>
+    {% load bootstrap5 %} {% bootstrap_css %} {% bootstrap_javascript %}
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'allDoc/style.css' %}"
+    />
+</head>
+{% block main %}
+
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="mx-auto">
+                <div class="search-container mx-auto my-5 px-5">
+                    <div class="header text-center mb-4">
+                        <h2>INFORMATION RETRIEVER SYSTEM</h2>
+                    </div>
+                    <div>
+                        <div class="row">
+                            <div class=" col">
+                              <a
+                              class="w-100 mt-2 btn btn-block btn-success"
+                              href="{% url 'search' %}"
+                              >
+                              Go to Search
+                            </a>
+                          </div>
+                          <div class="col">
+                              <a
+                              type="button"
+                              class="w-100 mt-2 btn btn-block btn-primary"
+                              href="{% url 'upload' %}"
+                              >
+                              Upload
+                            </a>
+                        </div>
+                        <div class=" col">
+                          <a
+                          type="button"
+                          class="w-100 mt-2 btn btn-block btn-danger"
+                          data-bs-toggle="modal"
+                          data-bs-target="#exampleModal"
+                          >
+                          Delete
+                        </a>
+                      </div>
+                    </div>
+                    <div class="mt-4 item-border">
+                        <h5>Total {{ documents|length }} files exists.</h5>
+                        <span class="badge bg-info">{{ pdf_count }} pdf found</span>
+                        <span class="badge bg-info">{{ image_count }} img found</span>
+                        <span class="badge bg-info">{{ text_count }} text found</span>
+                        <span class="badge bg-info">{{ html_count }} html found</span>
+                        <span class="badge bg-info">{{ url_count }} links found</span>
+                        <span class="badge bg-info">{{ docx_count }} docs found</span>
+                        <span class="badge bg-info">{{ ppt_count }} ppts found</span>
+                        <ul class="file-list mt-3" id="fileList">
+                          {% for document in documents %}
+                            <li class="file-list-item listItemBorder my-2">
+                                <div class="d-flex justify-content-between pe-4 ps-2 py-2">
+                                    <div class="d-flex">
+                                        <div class="d-flex align-items-center justify-content-center pe-3 mt-2">
+                                            <p class="text-large">{{forloop.counter}}.</p>
+                                        </div>
+                                        <div class="main">
+                                          {% with document.url|yesno:"True,False" as boolean_value %}
+                                          {% if boolean_value == "True" %}
+                                          <img src="{% static 'icons/link.png' %}" alt="My image" />
+                                          {% else %}
+                                            {% if document.get_extension == "pdf" %}
+                                            <img src="{% static 'icons/pdf.png' %}" alt="My image" />
+                                            {% elif document.get_extension in "['png','jpg','jpeg']" %}
+                                            <img src="{% static 'icons/image.png' %}" class="mt-1" alt="My image" />
+                                            {% elif document.get_extension == "txt"%}
+                                            <img src="{% static 'icons/text.png' %}" alt="My image" />
+                                            {% elif document.get_extension == "html"%}
+                                            <img src="{% static 'icons/html.png' %}" alt="My image" />
+                                            {% elif document.get_extension == "docx"%}
+                                            <img style="height: 30px;" src="{% static 'icons/docx.png' %}" alt="My image" />
+                                            {% elif document.get_extension == "pptx"%}
+                                            <img style="height: 30px;" src="{% static 'icons/pptx.png' %}" alt="My image" />
+                                            {% endif %}
+                                          {% endif %}
+                                          {% endwith %}
+                                        </div>
+                                        <div class="pt-1 ps-2"><span class="text-large">{{ document.title}}</span></div>
+                                    </div>
+                                    <div class="col-1 mt-2 d-flex">
+                                        <a  class="btn btn-secondary" href="{{ document.get_url }}" target="_blank">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+    class="modal fade"
+    id="exampleModal"
+    tabindex="-1"
+    aria-labelledby="exampleModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">
+            Delete "remove all document from index"?
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete all document from index?
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+          <form method="post" action="/delete_documents/">
+            <input type="hidden" name="path_redirect" value='/' />
+            <button type="submit" class="btn btn-danger">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}
+
+</html>

@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% block main %}
+{% load widget_tweaks %} {% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Retriever</title>
+    <!-- Bootstrap CSS -->
+    {% load bootstrap5 %} {% bootstrap_css %} {% bootstrap_javascript %}
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'searchPage/search.css' %}"
+    />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="mx-auto">
+          <div class="search-container mx-auto my-5 px-5">
+            <div class="header text-center">
+              <h2>Information Retriever System</h2>
+              <p>Searching in {{ results.total_documents}} files and links.</p>
+            </div>
+            <div class="search-box p-4">
+              <form method="post">
+                {% comment %} {% render_field form.query class="form-control search-bar" placeholder="Enter your query here :" type="text" %} {% endcomment %}
+                <div class="d-flex">
+                  <input class="form-control search-bar" placeholder="Enter your query here :" type="text" id="query_input_field"/>
+                  <div class="d-flex w-50 mx-1">
+                    <select class="form-control form-select" id="query_color_dropdown_field">
+                      <option value="" disabled selected>Color: </option>
+                      <option class="red" value="red">Red</option>
+                      <option class="green" value="green" >Green</option>
+                      <option class="blue" value="blue">Blue</option>
+                      <option class="yellow" value="yellow">Yellow</option>
+                      <option class="orange" value="orange">Orange</option>
+                    </select>
+                    <button type="button" class="btn btn-primary ms-1" onclick="handleAddBtnClick()"> Add </button>
+                  </div>
+                </div>
+                <div class="d-flex flex-column col-8 mx-auto mt-3">
+                  <div class="d-flex flex-column w-100" id="query_history_list">
+                  {% for instance in instances %}
+                  <div class="d-flex justify-content-between border rounded border-3 p-1 m-1" id='instance_{{ instance.id }}' >
+                    <div class="d-flex">
+                      <div class="form-check form-switch " style="margin-top: 3px;">
+                        <input class="form-check-input" type="checkbox" value="" id="flexSwitchCheckDefault"  
+                        {% if instance.checked %}checked{% endif %}
+                        onchange="handleQueryCheckInput({{ instance.id }})">
+                      </div>
+                      <span> {{ instance.query }} </span>
+                    </div>
+                    <div class="d-flex ms-3">
+                    <div class="d-flex">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="{{ instance.color }}" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                        <circle cx="8" cy="8" r="8"/>
+                      </svg>
+                    </div>
+                      <button type="button" class="btn d-flex" onclick="handleQueryDeleteInput({{ instance.id }})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                          <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                        </svg></button>
+                      </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                <div class="d-flex w-100 justify-content-center">
+                  <button type="submit" class="btn btn-success btn-block py-2 w-50">
+                    Search
+                  </button>
+                </div>
+                </div>
+              </form>
+            </div>
+            {% if results %}
+            <div class="mt-4">
+               <h5>Found {{ results.total_documents_found }} Documents</h5>
+              <span class="badge bg-info">{{ results.pdf_found }} pdf found</span>
+              <span class="badge bg-info">{{ results.image_found }} img found</span>
+              <span class="badge bg-info">{{ results.text_found }} text found</span>
+              <span class="badge bg-info">{{ results.html_found }} html found</span>
+              <span class="badge bg-info">{{ results.url_found }} link found</span>
+              <span class="badge bg-info">{{ results.docx_found }} docs found</span>
+              <span class="badge bg-info">{{ results.ppt_found }} pptx found</span>
+              {% endif %}
+              <ul class="file-list mt-3" id="fileList">
+                {% for document in results.data %}
+                <li class="file-list-item listItemBorder my-2">
+                  <div class="d-flex justify-content-between pe-4 ps-2 py-2">
+                    <div class="row col-md-12">
+                    <div class="d-flex justify-content-between">
+                    <div class="d-flex">
+                      <div
+                        class="d-flex align-items-center justify-content-center pe-3 mt-2"
+                      >
+                        <p class="text-large">{{ forloop.counter }}.</p>
+                      </div>
+                      {% if document.extension == "pdf" %}
+                      <img src="{% static 'icons/pdf.png' %}" alt="My image" />
+                      {% elif document.extension in "['png','jpg','jpeg']" %}
+                      <img src="{% static 'icons/image.png' %}" alt="My image" />
+                      {% elif document.extension == "txt"%}
+                      <img src="{% static 'icons/text.png' %}" alt="My image" />
+                      {% elif document.extension == "html"%}
+                      <img src="{% static 'icons/html.png' %}" alt="My image" />
+                      {% elif document.extension == "docx"%}
+                      <img style="height: 30px;" src="{% static 'icons/docx.png' %}" alt="My image" />
+                      {% elif document.extension == "pptx"%}
+                      <img style="height: 30px;" src="{% static 'icons/pptx.png' %}" alt="My image" />
+                      {% else %}
+                      <img src="{% static 'icons/link.png' %}" class="mt-1"  alt="My image" />
+
+                      {% endif %}
+                      <div class="pt-2 ps-2">
+                      <span class="text-large">{{ document.org_document.title }}</span
+                        >
+                      </div>
+                    </div>
+                    <div class="col-1 mt-2">
+                      {% if document.extension == 'pdf' %}
+                      <button type="button" class="btn btn-primary view_button_pdf" data-pdf-url="{{ document.org_document.get_highlighted_pdf_url }}">View</button>
+
+                      {% else %}
+                      
+                      {% comment %} <a
+                      href="{{ document.org_document.get_url }}"
+                      class="btn btn-primary"
+                      target="_blank"
+                      >View Image</a> {% endcomment %}
+                      <button
+                        type="button"
+                        class="btn btn-secondary view_button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModal"
+                        data-modal-data="{{ document.highlighted_content }}"
+                        data-modal-title="{{ document.org_document.title }}"
+                        data-model-extension="{{ document.extension }}"
+                        data-image-url="{{ document.org_document.get_url }}"
+                      >
+                        View
+                      </button>
+                      {% endif %}
+                    </div>
+
+
+                  </div>
+                    <div class="pt-1 ps-2 d-flex flex-wrap justify-content-between col-md-12 ms-3 mt-2">
+                      <!-- <br /> -->
+                      {% for q in document.query %}
+                      <div class="d-flex m-1" >
+                        <span class="badge bg-secondary " style="background-color: {{ q.color }} !important;" data-bs-toggle="tooltip" data-bs-placement="top" title='{{q.start_positions}}'>{{ forloop.counter}}. Query : {{ q.query }}  Occurrences :  {{ q.total_occurances }}  Color :  {{ q.color }} </span>
+
+                      <!-- <span class="badge bg-secondary " >{{ forloop.counter}}. Query : {{ q.query }} </span>
+                      &nbsp;
+                      <span class="badge bg-secondary ">Occurrences :  {{ q.total_occurances }} </span>
+                      <span class="badge bg-secondary ">Color :  {{ q.color }} </span> -->
+                      </div>
+                      {% endfor %}
+                      {% comment %} <span class="badge bg-secondary"
+                        >{{ document.total_occurances}} occurrences</span
+                      > {% endcomment %}
+                    </div>
+                  </div>
+
+                  </div>
+
+                  {% endfor %}
+
+                </li>
+                <div id="pdfContainer" style="display: none;"></div>
+
+              </ul>
+              
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">...</div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      var pdfContainer = document.getElementById("pdfContainer");
+  
+      function openPdfInContainer(pdfUrl) {
+          if (pdfContainer.style.display === "none") {
+              pdfContainer.innerHTML = `<iframe src="${pdfUrl}" width="100%" height="600px" frameborder="0"></iframe>`;
+              pdfContainer.style.display = "block";
+          } else {
+              pdfContainer.innerHTML = "";
+              pdfContainer.style.display = "none";
+          }
+      }
+  
+      document.querySelectorAll(".view_button_pdf").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+              var pdfUrl = this.getAttribute("data-pdf-url");
+              openPdfInContainer(pdfUrl);
+          });
+      });
+  </script>
+    
+    <script>
+      function handleAddBtnClick() {
+        var query_obj = document.getElementById("query_input_field");
+        var color_obj = document.getElementById("query_color_dropdown_field");
+        var query = query_obj.value;
+        var color = color_obj.value;
+        
+        if (query === "" || color === "") {
+          alert("Please enter a query and select a color");
+          return;
+        }
+
+        query_obj.value = "";
+        color_obj.value = "";
+        console.log(query,color)
+
+        axios.post('http://127.0.0.1:8000/add-query-history-api/',
+        {
+          "query": query,
+          "color": color,
+          "checked": true
+        }).then((response) => {
+          let data = response.data.data
+          var query_history_list = document.getElementById("query_history_list")
+          var new_instance = document.createElement("div")
+          new_instance.className = "d-flex justify-content-between border rounded border-3 p-1 m-1"
+          new_instance.id = "instance_" + data.id
+          new_instance.innerHTML = `<div class="d-flex">
+                      <div class="form-check form-switch " style="margin-top: 3px;">
+                        <input class="form-check-input" type="checkbox" value="" id="flexSwitchCheckDefault"  
+                        checked=${data.checked}
+                        onchange="handleQueryCheckInput(${ data.id })">
+                      </div>
+                      <span> ${ data.query } </span>
+                    </div>
+                    <div class="d-flex ms-3">
+                    <div class="d-flex">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="${ data.color }" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                        <circle cx="8" cy="8" r="8"/>
+                      </svg>
+                    </div>
+                      <button type="button" class="btn d-flex" onclick="handleQueryDeleteInput(${ data.id })">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                          <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                        </svg></button>
+                      </div>`
+          query_history_list.appendChild(new_instance)
+          console.log(new_instance)
+        }).catch(() => {
+          console.log('axios failed')
+        })
+      }
+
+      function handleQueryCheckInput(instance_id) {
+        axios.patch('http://127.0.0.1:8000/delete-query-history-api/',{
+          "query_id": instance_id
+        }).then((data) => {
+          console.log('axios works')
+          console.log(data)
+        }).catch(() => {
+          console.log('axios failed')
+        })
+      }
+
+      function handleQueryDeleteInput(instance_id) {
+        axios.delete('http://127.0.0.1:8000/delete-query-history-api/',{
+          data : {
+            "query_id": instance_id
+          }
+        }).then((response) => {
+          document.getElementById("instance_" + instance_id).remove()
+        }).catch(() => {
+          console.log('axios failed')
+        })
+      }
+
+      
+      function openModalWithData(data) {
+        // Get modal body element
+        var modalBody = document.querySelector("#exampleModal .modal-body");
+        var modalTitle = document.querySelector("#exampleModal .modal-title");
+
+        console.log("data", data)
+        // Set modal title
+        modalTitle.innerHTML = "<h5>" + data.modalTitle + "</h5>";
+        modalBody.innerHTML = "";
+        if(data.extension == 'png' || data.extension == 'jpg' || data.extension == 'jpeg'){
+          console.log("image_url", data.image_url)
+          modalBody.innerHTML += "<img src=" + data.image_url + " alt='My image' />";
+        }
+        {% comment %} modalBody.innerHTML = ""; {% endcomment %}
+        
+        // Clear existing content
+
+        // Populate modal body with data
+        modalBody.innerHTML += "<p>" + data.modalData + "</p>";
+
+        // Open the modal
+        {% comment %} var myModal = new bootstrap.Modal(
+          document.getElementById("exampleModal")
+        );
+        myModal.show(); {% endcomment %}
+      }
+
+      // Button click event handler
+      document.querySelectorAll(".view_button").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          // Get data attribute value
+          var modalData = this.getAttribute("data-modal-data");
+          var modalTitle = this.getAttribute("data-modal-title");
+          var image_url = this.getAttribute("data-image-url");
+          var extension = this.getAttribute("data-model-extension");
+          dataToSend = {
+            modalData: modalData,
+            modalTitle: modalTitle,
+            image_url: image_url,
+            extension: extension
+          };
+
+          console.log(dataToSend)
+          // Open the modal with data
+          openModalWithData(dataToSend);
+        });
+      });
+    </script>
+  </body>
+</html>
+{% endblock %}

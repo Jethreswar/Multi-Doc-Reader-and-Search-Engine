@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block main %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+    {% load bootstrap5 %} {% bootstrap_css %} {% bootstrap_javascript %}
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'uploadfile/styles.css' %}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 offset-md-3">
+          <div class="file-upload-container">
+            <form method="post" enctype="multipart/form-data" id="form" required>
+              {% csrf_token %}
+              <div class="file-drop-area" id="fileDropArea">
+                <h3>Drag & Drop Files Here</h3>
+                <div class="col-md-3 col-sm-3 col-lg-3 col-3 mx-auto mt-3 ml-2">
+                  <img
+                    class="img-fluid"
+                    src="{% static 'icons/file.png' %}"
+                    alt="cloud"
+                  />
+                </div>
+                <input
+                  type="file"
+                  id="fileInput"
+                  name="file"
+                  multiple
+                  style="display: none"
+                />
+                <p>or</p>
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  onclick="document.getElementById('fileInput').click()"
+                >
+                  Browse Files
+                </button>
+                <div class="site-box d-flex justify-content-between flex-column p-4 mt-3">
+                  <div class=" d-flex justify-content-between">
+                    <input
+                      type="text"
+                      id="urlInput"
+                      class="form-control search-bar"
+                      placeholder="Enter site url here :"
+                    />
+                    <button
+                      type="button"
+                      onclick="addUrl()"
+                      class="w-25 btn btn-primary btn-block py-2 ms-3"
+                    >
+                      Add url
+                    </button>
+                    <input type="hidden" id="hiddenInput" value="" name="links">
+                  </div>
+                  <div>
+                    <ol class=" text-start site-list mt-3" id="siteList"></ol>
+                  </div>
+                </div>
+              </div>
+              <div class="d-grid mx-auto col-8 text-center mt-3">
+                <button
+                  type="button"
+                  class="btn btn-block btn-primary"
+                  id="upload_button"
+                  onclick="upload()"
+                  disabled
+                >
+                  Upload
+                </button>
+                
+                <div class="row">
+                  <div class=" col">
+                    <button
+                    type="button"
+                    class="w-100 mt-2 btn btn-block btn-warning"
+                    onclick="clearClient()"
+                    >
+                    Clear
+                  </button>
+                </div>
+                <div class="col">
+                  <button
+                  type="button"
+                  class="w-100 mt-2 btn btn-block btn-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#exampleModal"
+                  >
+                  Delete
+                </button>
+              </div>
+                </div>
+              </div>
+              <ul class="file-list mt-3" id="fileList"></ul>
+
+              {% if show %}
+
+              <div class="d-grid mx-auto col-8 text-center mt-3">
+                <a
+                  href="{% url 'search' %}"
+                  id="search"
+                  class="mt-2 btn btn-block btn-success"
+                >
+                  Go to search
+                  <img src="{% static 'icons/search.png' %}" class="" alt="" />
+                </a>
+              </div>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">
+              Delete "remove all document from index"?
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete all document from index?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <form method="post" action="/delete_documents/">
+            <input type="hidden" name="path_redirect" value='/upload' />
+            <button type="submit" class="btn btn-danger">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Bootstrap JS (optional) -->
+    <script src="{% static 'uploadfile/script.js' %}"></script>
+  </body>
+</html>
+{% endblock %}
